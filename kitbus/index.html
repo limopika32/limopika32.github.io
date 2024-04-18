@@ -157,6 +157,9 @@ function UpdateDisplay()//表示更新
 	str2.innerHTML = GetBusFromIndex(NextBusIndex)+" ("+(NextBusIndex+1)+"本目)";
 	
 	var str3 = document.getElementById("rest");//残り時間表示表示欄セット
+	
+	var strC = document.getElementById("tips");
+
 	if(RestTimeSec<0){
 		str3.innerHTML = "--";//営業時間外
 		str3.style.color="silver";//営業時間外の色
@@ -171,13 +174,18 @@ function UpdateDisplay()//表示更新
 			str3.innerHTML = RestTimeSec2+ "秒";//残り時間表示（S）
 		}
 		else if (RestTimeSec2 < 10){
-			str3.innerHTML = RestTimeMin2 + "分 0" + RestTimeSec2+ "秒";//残り時間表示（MMSS）
+			str3.innerHTML = RestTimeMin2 + "分 0" + RestTimeSec2+ "秒";//残り時間表示（MM0S）
 		}else{
 			str3.innerHTML = RestTimeMin2 + "分 " + RestTimeSec2+ "秒";//残り時間表示（MMSS）
 		}
 		str3.style.color="azure";//通常の色
 		if(RestTimeSec<=10*60){
-		str3.style.color="red";//残り時間が短い場合の色
+			str3.style.color="red";//残り時間が短い場合
+			strC.innerText= ( tt_Global == tt_65bld_Weekday_240315 | tt_Global == tt_65bld_Saturday_240315 ) ?
+			"時間が無いときは 61号館前 なら間に合うかもしれません" :
+				"発車 10分前 になりました";
+		} else {
+			strC.innerText = "次のバス発車までの時間をカウントします";
 		}
 	}
 
@@ -190,7 +198,7 @@ function UpdateDisplay()//表示更新
 //------------------------------------------
  function Process()//周期実行
  {
-  	setTimeout("Process()",100);//msecでインターバル指定
+  	setTimeout("Process()",1000);//msecでインターバル指定
   	//console.log(global);
   	
     if(stop_anime==0)
@@ -277,7 +285,7 @@ function SetSelectBox()//セレクトボックスの設定
 	<main><div class="windo">
 
 	<h1>やつかほシャトルバス</h1>
-	<h2 id = "comennt">次のバス発車までの時間をカウントします</h2>
+	<h2 id="tips"> </h2>
 	
 <div class="subdo">
 	<h3 id="place1">[65号館前（平日）八束穂→扇が丘]出発まで</h2>
@@ -290,7 +298,7 @@ function SetSelectBox()//セレクトボックスの設定
 	
 	<div class="txtdo"><center>
 		<span style="font-size: 30pt">所要時間は30分程です</span><br>
-		<span style="font-size: 30pt">次の出発時刻: <span id="next">--:--:-- (-)</span></span><br>
+		<span style="font-size: 30pt">次の出発時刻; <span id="next">--:--:-- (-)</span></span><br>
 		<span id="date_str1">----年 --月 --日 (---)</span> <span id="current">00:00:00</span>
 	</center></div>
 </div>
@@ -377,7 +385,7 @@ function SetSelectBox()//セレクトボックスの設定
     }
 
 	h1,h2{
-		background: #a02000;
+		background: #00a0d0;
 	}
 
     h3 {
