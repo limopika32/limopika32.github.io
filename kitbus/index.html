@@ -1,5 +1,4 @@
 
-<!-- saved from url=(0070)https://www2.kanazawa-it.ac.jp/doi-lab/research/web/bus_timetable.html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <script>
@@ -111,16 +110,17 @@ function GetBusFromIndex(index_in)//インデックスに対応するバス時�
 		var bus_time=tt[index_in];
 		var bus_time1=Math.floor(bus_time/100);;
 		var bus_time2=bus_time%100;
-		var bus_time3=bus_time1 + ":"+("0"+bus_time2).slice(-2)+":00";
+		var bus_time3=bus_time1 + ":"+("0"+bus_time2).slice(-2);
 		return bus_time3;
 	}else{
-	return "[該当なし]";
+	return "--:--";
 	}
 }
 //------------------------------------------
 function GetTotalTimeTable(index_in)//すべてのバス時刻表をテキストで表示．指定インデックスに印付き
 {
 	var tt=tt_Global;//タイムテーブル配列のポインタ代入
+	if (tt_Global == tt_zero) return "終日運休";
 	var str="<th>次発</th><th>便No.</th><th>発車時刻</th>";
 	var mark="";
 	for (let i = 0; i < tt.length; i++) {
@@ -145,7 +145,7 @@ function GetDayStr(date_in)//現在の日時表示
 function UpdateDisplay()//表示更新
 {
 	var date2=new Date();
-	//date2.setHours(11);//debug
+	//date2.setHours(23);//debug
 	//date2.setMinutes(10);//debug
 	var NextBusIndex=GetNextBusIndex(date2);//次のバスが該当する配列番号探索．該当がなければ-1
 	var RestTimeSec=GetRestTimeSec(date2,NextBusIndex);//次のバスまでの時間（秒）計算．該当がなければ-1
@@ -163,6 +163,7 @@ function UpdateDisplay()//表示更新
 	if(RestTimeSec<0){
 		str3.innerHTML = "--";//営業時間外
 		str3.style.color="silver";//営業時間外の色
+		strC.innerText = "今日の便は終了しました";
 	}
 	else{
 		var RestTimeHour=Math.floor(RestTimeSec/3600);
@@ -170,7 +171,11 @@ function UpdateDisplay()//表示更新
 		var RestTimeMin2=Math.floor((RestTimeSec)/60);
 		var RestTimeSec2=RestTimeSec%60;
 		//str3.innerHTML = RestTimeHour + ":" + RestTimeMin + ":" + RestTimeSec2;//残り時間表示（HHMMSS）
-		if(RestTimeMin2 == 0){
+		
+		if (RestTimeMin2 >= 100){
+			str3.innerHTML = RestTimeMin2+ "分";//残り時間表示（M）
+		}
+		else if(RestTimeMin2 == 0){
 			str3.innerHTML = RestTimeSec2+ "秒";//残り時間表示（S）
 		}
 		else if (RestTimeSec2 < 10){
@@ -178,12 +183,14 @@ function UpdateDisplay()//表示更新
 		}else{
 			str3.innerHTML = RestTimeMin2 + "分 " + RestTimeSec2+ "秒";//残り時間表示（MMSS）
 		}
+
 		str3.style.color="azure";//通常の色
-		if(RestTimeSec<=10*60){
+
+		if (RestTimeSec<=10*60){
 			str3.style.color="red";//残り時間が短い場合
 			strC.innerText= ( tt_Global == tt_65bld_Weekday_240315 | tt_Global == tt_65bld_Saturday_240315 ) ?
-			"時間が無いときは 61号館前 なら間に合うかもしれません" :
-				"発車 10分前 になりました";
+				"時間が無いときは 61号館前 なら間に合うかもしれません" :
+				"発車まで 10分を切りました";
 		} else {
 			strC.innerText = "次のバス発車までの時間をカウントします";
 		}
@@ -291,14 +298,14 @@ function SetSelectBox()//セレクトボックスの設定
 	<h3 id="place1">[65号館前（平日）八束穂→扇が丘]出発まで</h2>
 		
 	<div class="txtdo"><center>
-		<span style="font-size: 100pt;" id="rest">--</span><br>
+		<span style="font-size: 90pt;" id="rest">--</span><br>
 		<select id="Term" onchange="SetTimeTable(this.selectedIndex)" style="font-size:20pt;border:2px solid #999;"></select>
 	
 	</center></div>
 	
 	<div class="txtdo"><center>
-		<span style="font-size: 30pt">所要時間は30分程です</span><br>
-		<span style="font-size: 30pt">次の出発時刻; <span id="next">--:--:-- (-)</span></span><br>
+		<span style="font-size: 26pt">所要時間は30分程です</span><br>
+		<span style="font-size: 26pt">次の出発時刻; <span id="next">--:--:-- (-)</span></span><br>
 		<span id="date_str1">----年 --月 --日 (---)</span> <span id="current">00:00:00</span>
 	</center></div>
 </div>
@@ -374,14 +381,14 @@ function SetSelectBox()//セレクトボックスの設定
     }
 
     h1 {
-        font-size: 40px;
+        font-size: 36px;
         border-radius:  19px 19px 0 0;
         margin: 0;
     }
 
     h2 {
         margin: 0 auto;
-        font-size: 24px;
+        font-size: 22px;
     }
 
 	h1,h2{
