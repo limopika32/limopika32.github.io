@@ -1,0 +1,461 @@
+
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>YSBTT_Kiosk</title>
+	<link rel="shortcut icon" href="./favicon.ico">
+
+<script>
+//------------------------------------------
+//八束穂65号館のシャトルバスのタイムテーブル
+//表記 HHMM
+//2024.3.15 update
+//"https://www.kanazawa-it.ac.jp/about_kit/yatsukaho.html"
+var tt_65bld_Weekday_240315=[
+'1020',
+'1120',
+'1240',
+'1420',
+'1510',
+'1550',
+'1710',
+'1740',
+'1830',
+'1950',
+'2050'
+];
+var tt_65bld_Saturday_240315=[
+'1240',
+'1440'
+];
+var tt_23bld_Weekday_240315=[
+'0820',
+'0840',
+'0920',
+'0940',
+'1040',
+'1200',
+'1230',
+'1320',
+'1510',
+'1630',
+'1710',
+'1750',
+'1910'
+]
+var tt_23bld_Saturday_240315=[
+'0820',
+'1320'
+]
+var tt_zero=[-9999];
+var tt_Global=tt_65bld_Weekday_240315;//タイムテーブルのポインタセット（デフォルト）
+//------------------------------------------
+//セレクトボックスの設定
+var selectBox = {
+    'tt_65bld_Weekday_240315'     : '2024授業期間（平日）65号館',
+    'tt_65bld_Saturday_240315'     : '2024授業期間（土曜日）65号館',
+    'tt_23bld_Weekday_240315'     : '2024授業期間（平日）23号館',
+    'tt_23bld_Saturday_240315'     : '2024授業期間（土曜日）23号館',
+	'tt_zero'								:'休み'
+};
+//------------------------------------------
+function GetCurrentTimeStr(date_in)//現在時刻文字列取得
+{
+  	var date=date_in;
+  	var h_val=date.getHours();
+  	var m_val=date.getMinutes();
+  	var s_val=date.getSeconds();
+  	var h_str=("0"+h_val).slice(-2)
+  	var m_str=("0"+m_val).slice(-2)
+  	var s_str=("0"+s_val).slice(-2)
+  	var time_str=h_str+":"+m_str+":"+s_str
+  	return time_str;
+}
+//------------------------------------------
+function GetRestTimeSec(date_in,i_in)//指定インデックスのバスまでの時間（秒）取得
+{
+	var tt=tt_Global;//タイムテーブル配列のポインタ代入
+	if(i_in<0)return -1;//インデックスエラー
+	if(i_in>tt.length)return -1;//インデックスエラー
+	
+	var time_temp=tt[i_in];//時刻表の指定インデックスの時刻数値（HHMM）
+	var tt_hours=Math.floor(time_temp/100);//時刻表上二桁（時間HH）
+	var tt_minutes=(time_temp%100);//時刻表下二桁（分MM）
+
+	var date_tt=new Date();
+	date_tt.setHours(tt_hours);//時刻表のHH設定
+	date_tt.setMinutes(tt_minutes);//時刻表のMM設定
+	date_tt.setSeconds(0);//時刻表の秒（ゼロ）設定
+	var dt2_msec=date_tt.getTime()-date_in.getTime();//時間差をミリ秒で計算
+	var dt2_sec=Math.floor(dt2_msec/(1000));//時間差を秒で計算
+	//var dt2_min=Math.floor(dt2_msec/(60*1000));//時間差を分に変換
+
+	return (dt2_sec);//差分を返す
+}
+//------------------------------------------
+function GetNextBusIndex(date_in)//次のバス配列のインデックス取得
+{
+	var tt=tt_Global;//タイムテーブル配列のポインタ代入
+	//return -1;//debug
+
+  	var date=date_in;
+	for (let i = 0; i < tt.length; i++) {
+		dt=GetRestTimeSec(date_in,i);//時間差分計算
+		if(dt>0)return i;//時間差分が正になったところでのインデックスを取り出す
+	}
+	return -1;
+}
+//------------------------------------------
+function GetBusFromIndex(index_in)//インデックスに対応するバス時刻文字列取得
+{
+	var tt=tt_Global;//タイムテーブル配列のポインタ代入
+
+	if(index_in>=0){
+		var bus_time=tt[index_in];
+		var bus_time1=Math.floor(bus_time/100);;
+		var bus_time2=bus_time%100;
+		var bus_time3=bus_time1 + ":"+("0"+bus_time2).slice(-2);
+		return bus_time3;
+	}else{
+	return "--:--";
+	}
+}
+//------------------------------------------
+function GetTotalTimeTable(index_in)//すべてのバス時刻表をテキストで表示．指定インデックスに印付き
+{
+	var tt=tt_Global;//タイムテーブル配列のポインタ代入
+	if (tt_Global == tt_zero) return "終日運休";
+	var str="<th>次発</th><th>便No.</th><th>発車時刻</th>";
+	var mark="";
+	for (let i = 0; i < tt.length; i++) {
+		mark= i==index_in ? ">>>" : "";
+		str+="<tr><td>"+mark+"</td><td><center>"+(i+1)+"</center></td><td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</td></tr>"
+	}
+	return str;
+}
+//------------------------------------------
+function GetDayStr(date_in)//現在の日時表示
+{
+	var year = date_in.getFullYear();// 年
+	var month = date_in.getMonth() + 1;// 月
+	var day = date_in.getDate();	//日
+	var dayOfWeek = date_in.getDay();// 曜日(数値)
+	var dayOfWeekStr = [ "日", "月", "火", "水", "木", "金", "土" ];
+	var str= year+"年 "+month+"月 "+day+"日"+" ("+dayOfWeekStr[dayOfWeek]+")";
+	
+	return str;
+}
+//------------------------------------------
+function UpdateDisplay()//表示更新
+{
+	var date2=new Date();
+	//date2.setHours(23);//debug
+	//date2.setMinutes(10);//debug
+	var NextBusIndex=GetNextBusIndex(date2);//次のバスが該当する配列番号探索．該当がなければ-1
+	var RestTimeSec=GetRestTimeSec(date2,NextBusIndex);//次のバスまでの時間（秒）計算．該当がなければ-1
+	
+	var str1 = document.getElementById("current");//現在時刻表示欄セット
+	str1.innerHTML = GetCurrentTimeStr(date2);
+	
+	var str2 = document.getElementById("next");//次のバスの出発時刻表示
+	str2.innerHTML = GetBusFromIndex(NextBusIndex)+" ("+(NextBusIndex+1)+"本目)";
+	
+	var str3 = document.getElementById("rest");//残り時間表示表示欄セット
+	
+	var strC = document.getElementById("tips");
+
+	if(RestTimeSec<0){
+		str3.innerHTML = "--";//営業時間外
+		str3.style.color="silver";//営業時間外の色
+		strC.innerText = "今日の便は終了しました";
+	}
+	else{
+		var RestTimeHour=Math.floor(RestTimeSec/3600);
+		var RestTimeMin=Math.floor((RestTimeSec%3600)/60);
+		var RestTimeMin2=Math.floor((RestTimeSec)/60);
+		var RestTimeSec2=RestTimeSec%60;
+		//str3.innerHTML = RestTimeHour + ":" + RestTimeMin + ":" + RestTimeSec2;//残り時間表示（HHMMSS）
+		
+		if (RestTimeMin2 >= 100){
+			str3.innerHTML = RestTimeMin2+ "分";//残り時間表示（M）
+		}
+		else if(RestTimeMin2 == 0){
+			str3.innerHTML = RestTimeSec2+ "秒";//残り時間表示（S）
+		}
+		else if (RestTimeSec2 < 10){
+			str3.innerHTML = RestTimeMin2 + "分 0" + RestTimeSec2+ "秒";//残り時間表示（MM0S）
+		}else{
+			str3.innerHTML = RestTimeMin2 + "分 " + RestTimeSec2+ "秒";//残り時間表示（MMSS）
+		}
+
+		str3.style.color="azure";//通常の色
+
+		if (RestTimeSec<=10*60){
+			str3.style.color="red";//残り時間が短い場合
+			strC.innerText= ( tt_Global == tt_65bld_Weekday_240315 | tt_Global == tt_65bld_Saturday_240315 ) ?
+				"時間が無いときは 61号館前 なら間に合うかもしれません" :
+				"発車まで 10分を切りました";
+		} else {
+			strC.innerText = "次のバス発車までの時間をカウントします";
+		}
+	}
+
+	var str4 = document.getElementById("timetable");//タイムテーブル表示欄セット
+	str4.innerHTML = GetTotalTimeTable(NextBusIndex);
+	
+	var str5= document.getElementById("date_str1");//日付表示欄セット
+	str5.innerHTML = GetDayStr(date2);
+}
+//------------------------------------------
+ function Process()//周期実行
+ {
+  	setTimeout("Process()",1000);//msecでインターバル指定
+  	//console.log(global);
+  	
+    if(stop_anime==0)
+    {
+    UpdateDisplay();
+  	}
+  
+  }
+//---------------------------------------------------
+function SetTimeTable(number)//タイムテーブルの設定
+{
+	var str1 = document.getElementById("place1");//バス停欄セット
+
+	if(number==0) {//65号館前　平日のタイムテーブル
+		tt_Global=tt_65bld_Weekday_240315;
+		str1.innerHTML = "[65号館前（平日）八束穂→扇が丘] 出発まで";
+	}
+	else if(number==1) {//65号館前　土曜日のタイムテーブル
+		tt_Global=tt_65bld_Saturday_240315;
+		str1.innerHTML = "[65号館前（土）八束穂→扇が丘] 出発まで";
+	}
+	else if(number==2) {//23号館前　平日のタイムテーブル
+		tt_Global=tt_23bld_Weekday_240315;
+		str1.innerHTML = "[23号館前（平日）扇が丘→八束穂] 出発まで";
+	}
+	else if(number==3) {//23号館前　土曜日のタイムテーブル
+		tt_Global=tt_23bld_Saturday_240315;
+		str1.innerHTML = "[23号館前（土）扇が丘→八束穂] 出発まで";
+	}
+	else
+	{
+		tt_Global=tt_zero;
+		str1.innerHTML = "[休み]";
+	}
+	UpdateDisplay();
+}
+//---------------------------------------------------
+function SetSelectBox()//セレクトボックスの設定
+{
+	var select = document.getElementById('Term');//オブジェクト取得
+	for ( var i in selectBox ) {
+	    var option = document.createElement('option');//項目オブジェクトの生成
+	 
+	    option.setAttribute('value', i);
+	    option.innerHTML = selectBox[i];//内容記入
+	 
+	    select.appendChild(option);//項目追加
+	}
+}
+//------------------------------------------
+  //以下初回実行コード
+  window.onload = function()
+  {
+    SetSelectBox();//選択メニューの設定
+	SetTimeTable(0);//デフォルト表示
+    
+    //曜日のデフォルト設定
+    var date3=new Date();//曜日チェック
+	var DayOfWeek=date3.getDay();//曜日チェック
+	var select = document.getElementById('Term');//セレクトボックスのオブジェクト取得
+	if(DayOfWeek==0){//日曜日の場合
+		SetTimeTable(4);//日曜日のデフォルト設定
+		select.options[4].selected=true;
+	}
+	else if(DayOfWeek==6){//土曜日の場合
+		SetTimeTable(1);//土曜日のデフォルト設定
+		select.options[1].selected=true;
+	}
+	else {//平日の場合
+		SetTimeTable(0);//平日のデフォルト設定
+		select.options[0].selected=true;
+	}
+	
+	//テーブル取得のテスト
+	var tbl = document.getElementsByTagName("table").item(0);
+	
+    stop_anime=0;//アニメーション停止フラグOFF
+  	Process();//周期実行
+  }
+//------------------------------------------
+</script>
+</head>
+
+<body><main>
+	<div class="windo">
+		<h1>
+		やつかほシャトルバス
+		<nav><span id="current">00:00:00</span></nav>
+		</h1>
+		
+		<h2>
+		<span id="tips"></span>
+		<nav><span id="date_str1">----年 --月 --日 (---)</span></nav>
+		</h2>
+	</div>
+
+	<span class="l win">
+	<div class="subdo">
+		<h3 id="place1">[65号館前（平日）八束穂→扇が丘]出発まで</h3>
+	
+		<div class="txtdo"><center>
+			<span style="font-size: 90pt;" id="rest">--</span><br>
+		</center></div>
+		
+		<div class="txtdo"><center>
+			<span style="font-size: 26pt">所要時間は30分程です</span><br>
+			<span style="font-size: 26pt">次の出発時刻; <span id="next">--:--:-- (-)</span></span><br>
+		</center></div>
+	</div>
+</span>
+
+<span class="r win">
+	<div class="subdo">
+		<h3>その他</h3>
+		<div class = "txtdo">
+			期間: 2024年4月1日（月）～8月2日（金）、9月17日（火）～2025年2月28日（金）<br>
+			（祝祭日・学園指定休校日は運休）<br>
+			<br>
+			
+			<span>
+				<img class="fix_pic" src="./img/ytsk.png" alt="やつかほキャンパスのホームページへ接続できるQRコード" />
+				<spl class="r"><img class="fix_pic" src="./img/limop.png" alt="スマートフォンやPCで時刻表を確認できるQRコード" /> </spl>
+				<br>
+				やつかほリサーチキャンパスHP
+				<spl class ="r">YSB TimeTable(お手元用)</spl>
+			</span>
+			
+			<br>
+			<center>2024.3.15 更新</center>
+		</div>
+	</div>
+</span>
+
+<select id="Term" onchange="SetTimeTable(this.selectedIndex)" style="font-size:20pt;border:2px solid #999;"></select>
+<span class="full d">
+	<div class="subdo">
+		<h3>時刻表</h3>
+		<div class="txtdo"><center>
+			<table border="" id="timetable" style="font-size: 20pt;"></table>
+		</center></div>
+	</div>
+	</span>
+
+	<br>
+
+</main></body>
+
+<style>
+    html {
+		background-color: #00a0d0;
+        
+        color: azure;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    main,body {
+        text-align: center;
+	}
+    
+	.c { 
+		text-align: center;
+	}
+
+    .windo{
+        background-color: #202020;
+    }
+
+    .subdo{
+        border-radius: 8px;
+        background: #404040;
+        margin: 10px;
+    }
+
+    .txtdo{
+        background: none;
+        padding: 20px;
+        
+        text-align: left;
+    }
+
+    .txtdo a {
+        background: azure;
+        color: #202020;
+        border-radius: 4px;
+    }
+
+	.fix_pic {
+		width: 240px;
+	}
+
+    h1 {
+        font-size: 40px;
+        margin: 0;
+		text-align: left;
+    }
+
+    h2 {
+        margin: 0 auto;
+        font-size: 24px;
+		text-align: left;
+    }
+
+	h1,h2{
+		background: #00a0d0;
+	}
+
+    h3 {
+        margin: 0;
+    	background: #606060;
+    }
+
+	th,td {
+    	border: solid 1px;
+    	padding: 10px;
+	}	
+
+	table {
+    	border-collapse:  collapse;
+	}
+
+	nav {
+		text-align: right;
+		float: right;
+	}
+
+	
+	.full {
+		height: 40%;
+		width: 97%;
+		margin: 0.5%;
+	}
+	.win {
+		height: 45%;
+		width: 49%;
+		margin: 0.5%;
+	}
+	.r {
+		float: right;
+	}
+		
+	.l {
+		float: left;
+	}
+	.d {
+		float:initial;
+	}
+	
+
+
+</style>
+
+</html>
