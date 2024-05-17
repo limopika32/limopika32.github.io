@@ -361,8 +361,20 @@ function SetSelectBox()//セレクトボックスの設定
 		<div class="txtdo"><center>
 			<table border="" id="timetable" style="font-size: 20pt;"></table>
 		</center></div>
+		<div class="info">
+			<ul>
+				<span>今日もやつかほシャトルバスをご利用頂きありがとうございます。</span>
+				<span>ご乗車の際は、通路を塞がないよう、リュック等は背負わずご乗車ください。</span>
+				<span>皆様のご理解、ご協力、よろしくお願いいたします。</span>
+
+				<span>Welcome to Yatsukaho Shuttle Bus.</span>
+				<span>When getting on the bus, please don't wear your backpack.</span>
+				<span>Thank you for your understanding.</span>
+			</ul>   
+		</div>
 	</div>
 	</span>
+
 
 </main></body>
 
@@ -444,6 +456,40 @@ function SetSelectBox()//セレクトボックスの設定
 		float: right;
 	}
 
+	.info {
+        margin: 0 20px 0 20px;
+        overflow: hidden;
+		text-align: left;
+    }
+
+	.info ul{
+		display: inline-block;
+        margin: 0;
+        white-space: nowrap;
+		animation: infoSlide 45s linear infinite;
+	}
+
+    .info span {
+        display: inline;
+        padding-left: 10px;
+        font-size: 32px;
+        letter-spacing: .12em;
+    }
+
+	@keyframes infoSlide {
+		0%{
+			color: transparent;
+			transform: translateX(-30px)
+		}
+		5%, 10% {
+			color: azure;
+			transform: translateX(-30px)
+		}
+        100% {
+            transform: translateX(-100%)
+        }
+    }
+
 	
 	.full {
 		height: 40%;
@@ -452,10 +498,11 @@ function SetSelectBox()//セレクトボックスの設定
 	}
 	.win {
 		height: 45%;
-		width: 49%;
-		margin: 0.5%;
+		width: 50%;
+		margin: 0;
 	}
 	.r {
+		
 		float: right;
 	}
 		
