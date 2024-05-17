@@ -123,11 +123,23 @@ function GetTotalTimeTable(index_in)//すべてのバス時刻表をテキスト
 {
 	var tt=tt_Global;//タイムテーブル配列のポインタ代入
 	if (tt_Global == tt_zero) return "終日運休";
-	var str="<th>次発</th><th>便No.</th><th>発車時刻</th>";
+	var str="<th> </th><th>便No.</th><th>発車時刻</th><th>到着目安</th>";
 	var mark="";
-	for (let i = 0; i < tt.length; i++) {
-		mark= i==index_in ? ">>>" : "";
-		str+="<tr><td>"+mark+"</td><td><center>"+(i+1)+"</center></td><td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</td></tr>"
+	for (let i = index_in; i < index_in+4; i++) {
+		if (i >= tt.length) break;
+		
+		if (i==index_in){
+			mark = "先発";
+		}else if(i == index_in+1){
+			mark = "次発";
+		}else{
+			mark = "";
+		}
+		
+		str+="<tr><td style=\"text-align:right\">"+mark+"</td>"
+		str+="<td><center>"+(i+1)+"</center></td>"
+		str+="<td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</td>"
+		str+="<td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</td></tr>"
 	}
 	return str;
 }
@@ -342,6 +354,7 @@ function SetSelectBox()//セレクトボックスの設定
 </span>
 
 <select id="Term" onchange="SetTimeTable(this.selectedIndex)" style="font-size:20pt;border:2px solid #999;"></select>
+
 <span class="full d">
 	<div class="subdo">
 		<h3>時刻表</h3>
@@ -350,8 +363,6 @@ function SetSelectBox()//セレクトボックスの設定
 		</center></div>
 	</div>
 	</span>
-
-	<br>
 
 </main></body>
 
@@ -375,7 +386,7 @@ function SetSelectBox()//セレクトボックスの設定
     }
 
     .subdo{
-        border-radius: 8px;
+        height: 420px;
         background: #404040;
         margin: 10px;
     }
@@ -424,6 +435,7 @@ function SetSelectBox()//セレクトボックスの設定
 	}	
 
 	table {
+		width: 99%;
     	border-collapse:  collapse;
 	}
 
