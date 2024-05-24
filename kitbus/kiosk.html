@@ -122,24 +122,43 @@ function GetBusFromIndex(index_in)//インデックスに対応するバス時�
 function GetTotalTimeTable(index_in)//すべてのバス時刻表をテキストで表示．指定インデックスに印付き
 {
 	var tt=tt_Global;//タイムテーブル配列のポインタ代入
-	if (tt_Global == tt_zero) return "終日運休";
 	var str="<th> </th><th>便No.</th><th>発車時刻</th><th>到着目安</th>";
 	var mark="";
+	
+	if (tt_Global == tt_zero) {
+		str+= "<tr><td>終日運休</td><td></td><td></td><td></td></tr>"
+		for (let i= 0; i<3;i++){
+			str+="<tr><td>　</td><td></td><td></td><td></td></tr>";
+		}
+		return str;
+	}
+
 	for (let i = index_in; i < index_in+4; i++) {
-		if (i >= tt.length) break;
+		if (i >= tt.length){
+			str+="<tr><td>　</td><td></td><td></td><td></td></tr>";
+			continue;
+		} 
 		
 		if (i==index_in){
 			mark = "先発";
 		}else if(i == index_in+1){
 			mark = "次発";
 		}else{
-			mark = "";
+			mark = "　";
 		}
 		
-		str+="<tr><td style=\"text-align:right\">"+mark+"</td>"
-		str+="<td><center>"+(i+1)+"</center></td>"
-		str+="<td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</td>"
-		str+="<td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</td></tr>"
+		str+="<tr><td style=\"text-align:right\">"+mark+"</td>";
+		str+="<td><center>"+(i+1)+"</center></td>";
+		str+="<td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</td>";
+		
+		if (Number(tt[i].substr(-2)) >= 30){
+			u_min = ("0" + (Number(tt[i].substr(-2)) - 30)).slice( -2 );
+			u_hr =  ("0" + (Number(tt[i].substr(0,2)) + 1)).slice( -2 );
+			str+="<td style=\"text-align: right\">"+u_hr+":"+u_min+"</td></tr>";
+		}else{
+			u_min = Number(tt[i].substr(-2)) + 30;
+			str+="<td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+u_min+"</td></tr>";
+		}
 	}
 	return str;
 }
@@ -159,7 +178,7 @@ function GetDayStr(date_in)//現在の日時表示
 function UpdateDisplay()//表示更新
 {
 	var date2=new Date();
-	//date2.setHours(23);//debug
+	//date2.setHours(5);//debug
 	//date2.setMinutes(10);//debug
 	var NextBusIndex=GetNextBusIndex(date2);//次のバスが該当する配列番号探索．該当がなければ-1
 	var RestTimeSec=GetRestTimeSec(date2,NextBusIndex);//次のバスまでの時間（秒）計算．該当がなければ-1
@@ -232,27 +251,34 @@ function UpdateDisplay()//表示更新
 function SetTimeTable(number)//タイムテーブルの設定
 {
 	var str1 = document.getElementById("place1");//バス停欄セット
+	var ico1 = document.getElementById("dest_ico"); //行き先のアイコン
+	
+	ico1.style.display = "block";
 
 	if(number==0) {//65号館前　平日のタイムテーブル
 		tt_Global=tt_65bld_Weekday_240315;
-		str1.innerHTML = "[65号館前（平日）八束穂→扇が丘] 出発まで";
+		str1.innerHTML = "65号館前 発 → 扇が丘 行き";
+		ico1.src="./img/ic_og.png";
 	}
 	else if(number==1) {//65号館前　土曜日のタイムテーブル
 		tt_Global=tt_65bld_Saturday_240315;
-		str1.innerHTML = "[65号館前（土）八束穂→扇が丘] 出発まで";
+		str1.innerHTML = "65号館前 発 → 扇が丘 行き (土曜ダイヤ)";
+		ico1.src="./img/ic_og.png";
 	}
 	else if(number==2) {//23号館前　平日のタイムテーブル
 		tt_Global=tt_23bld_Weekday_240315;
-		str1.innerHTML = "[23号館前（平日）扇が丘→八束穂] 出発まで";
+		str1.innerHTML = "23号館前 発 → 八束穂 行き";
+		ico1.src="./img/ic_ys.png";
 	}
 	else if(number==3) {//23号館前　土曜日のタイムテーブル
 		tt_Global=tt_23bld_Saturday_240315;
-		str1.innerHTML = "[23号館前（土）扇が丘→八束穂] 出発まで";
+		str1.innerHTML = "23号館前 発 → 八束穂 行き (土曜ダイヤ)";
+		ico1.src="./img/ic_ys.png";
 	}
-	else
-	{
+	else{
 		tt_Global=tt_zero;
 		str1.innerHTML = "[休み]";
+		ico1.style.display = "none";
 	}
 	UpdateDisplay();
 }
@@ -279,18 +305,40 @@ function SetSelectBox()//セレクトボックスの設定
     //曜日のデフォルト設定
     var date3=new Date();//曜日チェック
 	var DayOfWeek=date3.getDay();//曜日チェック
+	
 	var select = document.getElementById('Term');//セレクトボックスのオブジェクト取得
-	if(DayOfWeek==0){//日曜日の場合
-		SetTimeTable(4);//日曜日のデフォルト設定
+
+	// URLを取得
+	var url = new URL(window.location.href);
+	// URLSearchParamsオブジェクトを取得
+	var params = url.searchParams;
+
+	if(DayOfWeek==0){
+		//日曜日の場合
+		SetTimeTable(4);
 		select.options[4].selected=true;
-	}
-	else if(DayOfWeek==6){//土曜日の場合
-		SetTimeTable(1);//土曜日のデフォルト設定
-		select.options[1].selected=true;
-	}
-	else {//平日の場合
-		SetTimeTable(0);//平日のデフォルト設定
-		select.options[0].selected=true;
+	} else if ( params.has("dest") && params.get("dest") == "ys") {
+		// destパラメータが指定されている(やつかほ 行)
+		if(DayOfWeek==6){
+			// 土曜日の場合
+			SetTimeTable(3);
+			select.options[3].selected=true;
+		} else {
+			//平日の場合
+			SetTimeTable(2);
+			select.options[2].selected=true;
+		}
+	} else {
+		// 通常(扇が丘 行)
+		if(DayOfWeek==6){
+			//土曜日の場合
+			SetTimeTable(1);
+			select.options[1].selected=true;
+		} else {
+			//平日の場合
+			SetTimeTable(0);
+			select.options[0].selected=true;
+		}
 	}
 	
 	//テーブル取得のテスト
@@ -316,22 +364,28 @@ function SetSelectBox()//セレクトボックスの設定
 		</h2>
 	</div>
 
-	<span class="l win">
+	<span class="flx">
+	<span class="win">
 	<div class="subdo">
-		<h3 id="place1">[65号館前（平日）八束穂→扇が丘]出発まで</h3>
 	
-		<div class="txtdo"><center>
-			<span style="font-size: 90pt;" id="rest">--</span><br>
-		</center></div>
+		<h3 class="title">
+			<img id="dest_ico" class="fix_ico" src="./img/ic_og.png" alt="到着先" />
+			&ensp;
+			<span id="place1"></span>
+		</h3>
 		
-		<div class="txtdo"><center>
+		<span class="txtdo"><center>
+			<span style="font-size: 90pt;" id="rest">--</span>
+		</center></span>
+		
+		<span class="txtdo"><center>
 			<span style="font-size: 26pt">所要時間は30分程です</span><br>
 			<span style="font-size: 26pt">次の出発時刻; <span id="next">--:--:-- (-)</span></span><br>
-		</center></div>
+		</center></span>
 	</div>
 </span>
 
-<span class="r win">
+<span class="win">
 	<div class="subdo">
 		<h3>その他</h3>
 		<div class = "txtdo">
@@ -339,23 +393,24 @@ function SetSelectBox()//セレクトボックスの設定
 			（祝祭日・学園指定休校日は運休）<br>
 			<br>
 			
-			<span>
+			<span class="flx">
 				<img class="fix_pic" src="./img/ytsk.png" alt="やつかほキャンパスのホームページへ接続できるQRコード" />
-				<spl class="r"><img class="fix_pic" src="./img/limop.png" alt="スマートフォンやPCで時刻表を確認できるQRコード" /> </spl>
-				<br>
-				やつかほリサーチキャンパスHP
-				<spl class ="r">YSB TimeTable(お手元用)</spl>
+				<img class="fix_pic" src="./img/limop.png" alt="スマートフォンやPCで時刻表を確認できるQRコード" />
+			</span>
+			<span class="flx">
+				<span>やつかほリサーチキャンパスHP　　</span>
+				<span>YSB TimeTable (お手元用)　</span>
 			</span>
 			
-			<br>
 			<center>2024.3.15 更新</center>
 		</div>
 	</div>
 </span>
+</span>
 
-<select id="Term" onchange="SetTimeTable(this.selectedIndex)" style="font-size:20pt;border:2px solid #999;"></select>
+<select class="t" id="Term" onchange="SetTimeTable(this.selectedIndex)"></select>
 
-<span class="full d">
+<span class="full">
 	<div class="subdo">
 		<h3>時刻表</h3>
 		<div class="txtdo"><center>
@@ -386,6 +441,7 @@ function SetSelectBox()//セレクトボックスの設定
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     main,body {
+		margin: 32px 8px 32px 8px;
         text-align: center;
 	}
     
@@ -395,6 +451,7 @@ function SetSelectBox()//セレクトボックスの設定
 
     .windo{
         background-color: #202020;
+		margin: 0 14px 0 14px;
     }
 
     .subdo{
@@ -418,6 +475,10 @@ function SetSelectBox()//セレクトボックスの設定
 
 	.fix_pic {
 		width: 240px;
+	}
+
+	.fix_ico {
+		width: 64px;
 	}
 
     h1 {
@@ -457,7 +518,7 @@ function SetSelectBox()//セレクトボックスの設定
 	}
 
 	.info {
-        margin: 0 20px 0 20px;
+        margin: -10px 20px 0 20px;
         overflow: hidden;
 		text-align: left;
     }
@@ -490,6 +551,11 @@ function SetSelectBox()//セレクトボックスの設定
         }
     }
 
+	select{
+		display: none;
+		font-size:20pt;
+		border:2px solid #999;
+	}
 	
 	.full {
 		height: 40%;
@@ -501,19 +567,23 @@ function SetSelectBox()//セレクトボックスの設定
 		width: 50%;
 		margin: 0;
 	}
-	.r {
-		
-		float: right;
-	}
 		
 	.l {
 		float: left;
 	}
-	.d {
-		float:initial;
-	}
-	
 
+	.flx{
+		display: flex;
+		justify-content: space-around;
+	}
+
+	.title{
+		padding: 6px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 42px;
+	}
 
 </style>
 
