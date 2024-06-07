@@ -9,6 +9,8 @@
 //表記 HHMM
 //2024.3.15 update
 //"https://www.kanazawa-it.ac.jp/about_kit/yatsukaho.html"
+var bus_type;
+
 var tt_65bld_Weekday_240315=[
 '1020',
 '1120',
@@ -122,13 +124,19 @@ function GetBusFromIndex(index_in)//インデックスに対応するバス時�
 function GetTotalTimeTable(index_in)//すべてのバス時刻表をテキストで表示．指定インデックスに印付き
 {
 	var tt=tt_Global;//タイムテーブル配列のポインタ代入
-	var str="<th> </th><th>便No.</th><th>発車時刻</th><th>到着目安</th>";
+	var str="<th> </th><th>便No.</th><th>発車時刻</th><th></th><th>到着目安</th>";
 	var mark="";
 	
 	if (tt_Global == tt_zero) {
-		str+= "<tr><td>終日運休</td><td></td><td></td><td></td></tr>"
-		for (let i= 0; i<3;i++){
-			str+="<tr><td>　</td><td></td><td></td><td></td></tr>";
+		for (let i= 0; i<4;i++){
+			str+="<tr>";
+			str+= i==0 ? "<td>終日運休</td>" : "<td>　</td>";
+
+			for(let j = 0; j < 4; j++){
+				str+="<td></td>";
+			}
+			
+			str+="</tr>";
 		}
 		return str;
 	}
@@ -140,16 +148,39 @@ function GetTotalTimeTable(index_in)//すべてのバス時刻表をテキスト
 		} 
 		
 		if (i==index_in){
-			mark = "先発";
+			mark = "<b>先発</b>";
+			str+="<tr bgcolor=\"#606060\">";
 		}else if(i == index_in+1){
 			mark = "次発";
 		}else{
 			mark = "　";
+			str+="<tr>";
 		}
 		
-		str+="<tr><td style=\"text-align:right\">"+mark+"</td>";
-		str+="<td><center>"+(i+1)+"</center></td>";
-		str+="<td style=\"text-align: right\">"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</td>";
+		str+="<td style=\"text-align:right\">"+mark+"</td>";
+		
+		switch(bus_type){
+			case 0:
+			case 1:
+				//65号館前
+				str+="<td class=\"td_og\">"
+				str+="<span>おうぎ</span><nav>"+(i+61)+"</nav>";
+				break;
+			case 2:
+			case 3:
+				//23号館前
+				str+="<td class=\"td_ys\">"
+				str+="<span>やつかほ</span><nav>"+(i+21)+"</nav>";
+				break;
+			default:
+				str+="<td>"
+				str+="<center>"+(i+1)+"</center>";
+		}
+		str+="</td>"
+
+		str+="<td style=\"text-align: right\"><b>"+tt[i].substr(0,2)+":"+tt[i].substr(-2)+"</b></td>";
+
+		str+="<td><center>→</center></td>" 
 		
 		if (Number(tt[i].substr(-2)) >= 30){
 			u_min = ("0" + (Number(tt[i].substr(-2)) - 30)).slice( -2 );
@@ -238,7 +269,7 @@ function UpdateDisplay()//表示更新
 //------------------------------------------
  function Process()//周期実行
  {
-  	setTimeout("Process()",1000);//msecでインターバル指定
+  	setTimeout("Process()",500);//msecでインターバル指定
   	//console.log(global);
   	
     if(stop_anime==0)
@@ -255,31 +286,37 @@ function SetTimeTable(number)//タイムテーブルの設定
 	
 	ico1.style.display = "block";
 
-	if(number==0) {//65号館前　平日のタイムテーブル
-		tt_Global=tt_65bld_Weekday_240315;
-		str1.innerHTML = "65号館前 発 → 扇が丘 行き";
-		ico1.src="./img/ic_og.png";
+	switch (number){
+		case 0:
+			//65号館前　平日のタイムテーブル
+			tt_Global=tt_65bld_Weekday_240315;
+			str1.innerHTML = "65号館前 発 → 扇が丘 行き";
+			ico1.src="./img/ic_og.png";
+			break;
+		case 1:
+			//65号館前　土曜日のタイムテーブル
+			tt_Global=tt_65bld_Saturday_240315;
+			str1.innerHTML = "65号館前 発 → 扇が丘 行き (土曜ダイヤ)";
+			ico1.src="./img/ic_og.png";
+			break;
+		case 2:
+			//23号館前　平日のタイムテーブル
+			tt_Global=tt_23bld_Weekday_240315;
+			str1.innerHTML = "23号館前 発 → 八束穂 行き";
+			ico1.src="./img/ic_ys.png";
+			break;
+		case 3:
+			//23号館前　土曜日のタイムテーブル
+			tt_Global=tt_23bld_Saturday_240315;
+			str1.innerHTML = "23号館前 発 → 八束穂 行き (土曜ダイヤ)";
+			ico1.src="./img/ic_ys.png";
+			break;
+		default:
+			tt_Global=tt_zero;
+			str1.innerHTML = "[休み]";
+			ico1.style.display = "none";
 	}
-	else if(number==1) {//65号館前　土曜日のタイムテーブル
-		tt_Global=tt_65bld_Saturday_240315;
-		str1.innerHTML = "65号館前 発 → 扇が丘 行き (土曜ダイヤ)";
-		ico1.src="./img/ic_og.png";
-	}
-	else if(number==2) {//23号館前　平日のタイムテーブル
-		tt_Global=tt_23bld_Weekday_240315;
-		str1.innerHTML = "23号館前 発 → 八束穂 行き";
-		ico1.src="./img/ic_ys.png";
-	}
-	else if(number==3) {//23号館前　土曜日のタイムテーブル
-		tt_Global=tt_23bld_Saturday_240315;
-		str1.innerHTML = "23号館前 発 → 八束穂 行き (土曜ダイヤ)";
-		ico1.src="./img/ic_ys.png";
-	}
-	else{
-		tt_Global=tt_zero;
-		str1.innerHTML = "[休み]";
-		ico1.style.display = "none";
-	}
+
 	UpdateDisplay();
 }
 //---------------------------------------------------
@@ -315,34 +352,20 @@ function SetSelectBox()//セレクトボックスの設定
 
 	if(DayOfWeek==0){
 		//日曜日の場合
-		SetTimeTable(4);
-		select.options[4].selected=true;
+		bus_type = 4;	
 	} else if ( params.has("dest") && params.get("dest") == "ys") {
 		// destパラメータが指定されている(やつかほ 行)
-		if(DayOfWeek==6){
-			// 土曜日の場合
-			SetTimeTable(3);
-			select.options[3].selected=true;
-		} else {
-			//平日の場合
-			SetTimeTable(2);
-			select.options[2].selected=true;
-		}
+		bus_type = DayOfWeek==6 ? 3 : 2;
 	} else {
 		// 通常(扇が丘 行)
-		if(DayOfWeek==6){
-			//土曜日の場合
-			SetTimeTable(1);
-			select.options[1].selected=true;
-		} else {
-			//平日の場合
-			SetTimeTable(0);
-			select.options[0].selected=true;
-		}
+		bus_type = DayOfWeek==6 ? 1 : 0;
 	}
+
+	SetTimeTable(bus_type);
+	select.options[bus_type].selected=true;
 	
 	//テーブル取得のテスト
-	var tbl = document.getElementsByTagName("table").item(0);
+	//var tbl = document.getElementsByTagName("table").item(0);
 	
     stop_anime=0;//アニメーション停止フラグOFF
   	Process();//周期実行
@@ -575,6 +598,14 @@ function SetSelectBox()//セレクトボックスの設定
 	.flx{
 		display: flex;
 		justify-content: space-around;
+	}
+
+	.td_ys{
+		background-color: darkblue;
+	}
+	
+	.td_og{
+		background-color: chocolate;
 	}
 
 	.title{
