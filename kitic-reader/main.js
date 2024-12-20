@@ -209,12 +209,14 @@ window.onload = function(){
 }
 
 async function start(){
-    await sleep(150);
-
+    
     sequence(2);
+    await sleep(150);
     await deviceSetup();
+
     sequence(3);
     await initialize();
+
     sequence(4);
 
     do{
@@ -235,5 +237,5 @@ async function start(){
 
         sequence(5);
         await sleep(1000)
-    }while(true);
+    } while(true);
 }
