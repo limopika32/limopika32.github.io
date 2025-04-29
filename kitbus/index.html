@@ -46,7 +46,7 @@ var tt_23bld_Saturday_25=[
 '1320'
 ]
 var tt_zero=[-9999];
-var tt_Global=tt_65bld_Weekday_240315;//タイムテーブルのポインタセット（デフォルト）
+var tt_Global=tt_65bld_Weekday_25;//タイムテーブルのポインタセット（デフォルト）
 //------------------------------------------
 //セレクトボックスの設定
 var selectBox = {
@@ -190,7 +190,7 @@ function UpdateDisplay()//表示更新
 
 		if (RestTimeSec<=10*60){
 			str3.style.color="red";//残り時間が短い場合
-			strC.innerText= ( tt_Global == tt_65bld_Weekday_240315 | tt_Global == tt_65bld_Saturday_240315 ) ?
+			strC.innerText= ( tt_Global == tt_65bld_Weekday_25 | tt_Global == tt_65bld_Saturday_25 ) ?
 				"バスは 65号館 → 61号館前 → 74号館前 の順に停まります" :
 				"発車まで 10分を切りました";
 		} else {
